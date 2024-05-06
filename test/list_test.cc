@@ -9,18 +9,56 @@
 // namespace data = cista::offset;
 using namespace cista;
 
+TEST_CASE("list initialization") {
+  using cista::raw::list;
+
+  {
+    auto l = list<int>();
+    CHECK(l.empty());
+    CHECK(l.size() == 0);
+    //  CHECK(l.validate());
+    //  CHECK(l.begin() == l.end());
+  }
+
+  {
+    auto l = list<int>(42);
+    CHECK(false == l.empty());
+    CHECK(l.size() == 42);
+    //  CHECK(l.validate());
+    //  CHECK(l.begin() == l.end());
+  }
+
+  {
+    auto l_a = list<int>{111, 222, 333};
+    list<int> l_b(l_a);
+
+    //  CHECK(l_a == l_b);
+    CHECK(l_a.size() == l_b.size());
+
+    //  CHECK(l_a.validate());
+    //  CHECK(l_b.validate());
+  }
+
+  return;
+}
+
 TEST_CASE("list emplace_back on empty") {
   using cista::raw::list;
 
   auto l = list<int>();
 
   CHECK(l.empty());
-  CHECK(l.size() == 0u);
+  CHECK(l.size() == 0);
+
+  auto begin = l.begin();
+  auto end = l.end();
+
+  CHECK(begin == end);
   CHECK(l.begin() == l.end());
 
   auto& last_ref = l.emplace_back(42);
-  auto list_it = std::prev(l.end());
-  const auto const_list_it = std::prev(l.cend());
+  auto list_it = l.end().prev();
+  const auto const_list_it = l.cend().prev();
 
   CHECK(last_ref == 42);
   CHECK(list_it != l.end());
@@ -36,8 +74,8 @@ TEST_CASE("list emplace_back on already filled") {
   auto l = list<int>{111, 222, 333};
 
   auto& last_ref = l.emplace_back(444);
-  auto list_it = std::prev(l.end());
-  const auto const_list_it = std::prev(l.cend());
+  auto list_it = l.end().prev();
+  const auto const_list_it = l.cend().prev();
 
   CHECK(last_ref == 444);
   CHECK(list_it != l.end());
@@ -50,9 +88,9 @@ TEST_CASE("list clear, basic") {
 
   auto l = list<int>{111, 222};
 
-  auto some_it = std::prev(l.end());
+  auto some_it = l.end().prev();
   auto& last_ref = l.emplace_back(333);
-  auto list_it = std::prev(l.end());
+  auto list_it = l.end().prev();
 
   CHECK((*some_it) == 222);
   CHECK(last_ref == 333);
@@ -61,7 +99,7 @@ TEST_CASE("list clear, basic") {
   l.clear();
 
   CHECK(l.empty());
-  CHECK(l.size() == 0u);
+  CHECK(l.size() == 0);
   CHECK(l.begin() == l.end());
 }
 
@@ -103,10 +141,10 @@ TEST_CASE("list itors stability, moderate") {
   auto l_end = l.end();
 
   auto& ref444 = l.emplace_back(444);
-  auto it_444 = std::prev(l.end());
+  auto it_444 = l.end().prev();
 
   auto& ref555 = l.emplace_back(555);
-  auto it_555 = std::prev(l.end());
+  auto it_555 = l.end().prev();
 
   auto ones_it_from_begin = l_begin++;
   auto twos_it_from_begin = l_begin++;
@@ -133,7 +171,7 @@ TEST_CASE("list erase, iterator ending on filled") {
 
   auto l = list<int>{111, 222};
 
-  auto some_it = std::prev(l.end());
+  auto some_it = l.end().prev();
   auto erase_it = l.erase(some_it);
 
   CHECK(erase_it == l.end());
@@ -146,12 +184,12 @@ TEST_CASE("list erase, iterator endining on one element") {
 
   auto l = list<int>{42};
 
-  auto some_it = std::prev(l.end());
+  auto some_it = l.end().prev();
   auto erase_it = l.erase(some_it);
 
   CHECK(erase_it == l.end());
   CHECK(l.empty());
-  CHECK(l.size() == 0u);
+  CHECK(l.size() == 0);
   CHECK(l.begin() == l.end());
 }
 
@@ -160,7 +198,7 @@ TEST_CASE("list erase, iterator 'next' onto endining") {
 
   auto l = list<int>{111, 222};
 
-  auto some_it = std::next(l.begin());
+  auto some_it = l.begin().next();
   auto erase_it = l.erase(some_it);
 
   CHECK(erase_it == l.end());
@@ -173,7 +211,7 @@ TEST_CASE("list erase, iterator begining") {
 
   auto l = list<int>{111, 222};
 
-  auto last_it = std::prev(l.end());
+  auto last_it = l.end().prev();
 
   auto some_it = l.begin();
   auto erase_it = l.erase(some_it);
@@ -189,13 +227,13 @@ TEST_CASE("list itors stability, erase") {
   auto l = list<int>{111, 222};
 
   auto& ref333 = l.emplace_back(333);
-  auto it_333 = std::prev(l.end());
+  auto it_333 = l.end().prev();
 
   auto& ref444 = l.emplace_back(444);
-  auto it_444 = std::prev(l.end());
+  auto it_444 = l.end().prev();
 
   auto& ref555 = l.emplace_back(555);
-  auto it_555 = std::prev(l.end());
+  auto it_555 = l.end().prev();
 
   {
     auto erase_it = l.erase(it_333);
@@ -218,6 +256,4 @@ TEST_CASE("list itors stability, erase") {
     auto erase_it = l.erase(it_444);
     CHECK((*erase_it) == 000);
   }
-
-  return;
 }
