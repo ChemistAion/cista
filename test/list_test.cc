@@ -16,16 +16,16 @@ TEST_CASE("list initialization") {
     auto l = list<int>();
     CHECK(l.empty());
     CHECK(l.size() == 0);
-    //  CHECK(l.validate());
-    //  CHECK(l.begin() == l.end());
+    CHECK(l.begin() == l.end());
+    CHECK(l.cbegin() == l.cend());
   }
 
   {
     auto l = list<int>(42);
     CHECK(false == l.empty());
     CHECK(l.size() == 42);
-    //  CHECK(l.validate());
-    //  CHECK(l.begin() == l.end());
+    CHECK(l.begin() != l.end());
+    CHECK(l.cbegin() != l.cend());
   }
 
   {
@@ -34,9 +34,8 @@ TEST_CASE("list initialization") {
 
     //  CHECK(l_a == l_b);
     CHECK(l_a.size() == l_b.size());
-
-    //  CHECK(l_a.validate());
-    //  CHECK(l_b.validate());
+    CHECK(l_a.begin() != l_b.begin());
+    CHECK(l_a.end() != l_b.end());
   }
 
   return;
@@ -51,10 +50,14 @@ TEST_CASE("list emplace_back on empty") {
   CHECK(l.size() == 0);
 
   auto begin = l.begin();
+  auto cbegin = l.cbegin();
   auto end = l.end();
+  auto cend = l.cend();
 
   CHECK(begin == end);
+  CHECK(cbegin == cend);
   CHECK(l.begin() == l.end());
+  CHECK(l.cbegin() == l.cend());
 
   auto& last_ref = l.emplace_back(42);
   auto list_it = l.end().prev();
@@ -83,24 +86,92 @@ TEST_CASE("list emplace_back on already filled") {
   CHECK((*const_list_it) == last_ref);
 }
 
-TEST_CASE("list clear, basic") {
+TEST_CASE("list clear") {
   using cista::raw::list;
 
-  auto l = list<int>{111, 222};
+  {
+    auto l = list<int>();
+    l.clear();
 
-  auto some_it = l.end().prev();
-  auto& last_ref = l.emplace_back(333);
-  auto list_it = l.end().prev();
+    CHECK(l.empty());
+    CHECK(l.size() == 0);
+    CHECK(l.begin() == l.end());
 
-  CHECK((*some_it) == 222);
-  CHECK(last_ref == 333);
-  CHECK(list_it != l.end());
+    l.clear();
+    l.clear();
 
-  l.clear();
+    CHECK(l.empty());
+    CHECK(l.size() == 0);
+    CHECK(l.begin() == l.end());
+  }
 
-  CHECK(l.empty());
-  CHECK(l.size() == 0);
-  CHECK(l.begin() == l.end());
+  {
+    auto l = list<int>();
+    auto l_a = l;
+    auto l_b = l;
+
+    CHECK(l.empty());
+    CHECK(l_a.empty());
+    CHECK(l_b.empty());
+
+    CHECK(l.begin() == l.end());
+    CHECK(l.cbegin() == l.cend());
+    CHECK(l_a.begin() == l_a.end());
+    CHECK(l_a.cbegin() == l_a.cend());
+    CHECK(l_b.begin() == l_b.end());
+    CHECK(l_b.cbegin() == l_b.cend());
+
+    l_a.clear();
+    l_b.clear();
+
+    CHECK(l_a.empty());
+    CHECK(l_b.empty());
+    CHECK(l_a.begin() == l_a.end());
+    CHECK(l_a.cbegin() == l_a.cend());
+    CHECK(l_b.begin() == l_b.end());
+    CHECK(l_b.cbegin() == l_b.cend());
+
+    l_a.emplace_back(111);
+    l_b.emplace_back(111);
+
+    l_a.clear();
+    CHECK(l_a.empty());
+    CHECK(false == l_b.empty());
+    CHECK(l_a.begin() == l_a.end());
+    CHECK(l_a.cbegin() == l_a.cend());
+    CHECK(l_b.begin() != l_b.end());
+    CHECK(l_b.cbegin() != l_b.cend());
+
+    l_a.emplace_back(111);
+    l_b.clear();
+
+    CHECK(false == l_a.empty());
+    CHECK(l_b.empty());
+    CHECK(l_a.begin() != l_a.end());
+    CHECK(l_a.cbegin() != l_a.cend());
+    CHECK(l_b.begin() == l_b.end());
+    CHECK(l_b.cbegin() == l_b.cend());
+  }
+
+  {
+    auto l = list<int>{111, 222};
+
+    auto some_it = l.end().prev();
+    auto& last_ref = l.emplace_back(333);
+    auto list_it = l.end().prev();
+
+    CHECK((*some_it) == 222);
+    CHECK(last_ref == 333);
+    CHECK(list_it != l.end());
+
+    l.clear();
+    l.clear();
+
+    CHECK(l.empty());
+    CHECK(l.size() == 0);
+    CHECK(l.begin() == l.end());
+    CHECK(l.cbegin() == l.cend());
+  }
 }
 
 TEST_CASE("list itors stability, basic") {
@@ -256,4 +327,28 @@ TEST_CASE("list itors stability, erase") {
     auto erase_it = l.erase(it_444);
     CHECK((*erase_it) == 000);
   }
+}
+
+TEST_CASE("list ctors") {
+  using cista::raw::list;
+
+  auto l = list<int>{111, 222, 333};
+
+  auto l_a = l;
+  l.erase(l.end().prev());
+  auto l_b = l;
+
+  CHECK(l.size() == 2);
+  CHECK(l_a.size() == 3);
+  CHECK(l_b.size() == 2);
+
+  l_a.emplace_front(121212);
+  l_b.emplace_front(212121);
+  
+  l.emplace_front(123456);
+  l.emplace_back(654321);
+
+  //TODO: move ctor
+
+  return;
 }

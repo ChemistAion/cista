@@ -146,24 +146,33 @@ struct basic_list {
       : basic_list() {
     CISTA_UNUSED_PARAM(alloc);
     for (; first != last; ++first) insert(&node_, *first);
-
-    return;
   }
 
   basic_list(std::initializer_list<value_type> init,
              Allocator const& alloc = Allocator{})
       : basic_list(init.begin(), init.end(), alloc) {}
 
-  ~basic_list() { }
+  basic_list(basic_list const& other, Allocator const& alloc = Allocator{})
+      : basic_list(other.cbegin(), other.cend(), alloc) {}
+
+  basic_list& operator=(basic_list const& other) {
+    if (&other != this) {
+      clear();
+      auto first = other.cbegin();
+      auto last = other.cend();
+      for (; first != last; ++first) insert(&node_, *first);
+    }
+    return *this;
+  }
+
+  ~basic_list() { clear(); }
 
   allocator_type get_allocator() const noexcept { return {}; }
 
   iterator begin() const noexcept { return iterator(node_.next_); }
-  iterator end() const noexcept { return iterator(&node_); }  // NOLINT
-  const_iterator cbegin() const noexcept { const_iterator(node_.next_); }
-  const_iterator cend() const noexcept {
-    return const_iterator(&node_);
-  }  // NOLINT
+  iterator end() const noexcept { return iterator(&node_); }
+  const_iterator cbegin() const noexcept { return const_iterator(node_.next_); }
+  const_iterator cend() const noexcept { return const_iterator(&node_); }
 
   friend const_iterator begin(const basic_list& other) noexcept {
     return other.begin();
@@ -218,8 +227,7 @@ struct basic_list {
   }
 
   iterator insert(const_iterator pos, value_type init = value_type{}) {
-    node* create_node =
-        static_cast<node*>(std::malloc(sizeof(node)));  // NOLINT
+    node* create_node = static_cast<node*>(std::malloc(sizeof(node)));
     if (create_node == nullptr) {
       throw_exception(std::bad_alloc());
     }
@@ -245,7 +253,7 @@ struct basic_list {
     const auto node_size = sizeof(node);
 
     for (size_type i = count; i > 0; --i) {
-      node* create_node = static_cast<node*>(std::malloc(node_size));  // NOLINT
+      node* create_node = static_cast<node*>(std::malloc(node_size));
       if (create_node == nullptr) {
         throw_exception(std::bad_alloc());
       }
