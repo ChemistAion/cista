@@ -152,8 +152,15 @@ struct basic_list {
              Allocator const& alloc = Allocator{})
       : basic_list(init.begin(), init.end(), alloc) {}
 
+  ////////////////////////////////////////////////////////////////////////////////
+
   basic_list(basic_list const& other, Allocator const& alloc = Allocator{})
       : basic_list(other.cbegin(), other.cend(), alloc) {}
+
+  basic_list(basic_list&& other, Allocator const& alloc = Allocator{})
+      : basic_list() {
+    swap(other);
+  }
 
   basic_list& operator=(basic_list const& other) {
     if (&other != this) {
@@ -164,6 +171,12 @@ struct basic_list {
     }
     return *this;
   }
+
+  basic_list& operator=(basic_list&& other) {
+    return *this;  // TODO
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
 
   ~basic_list() { clear(); }
 
@@ -326,6 +339,7 @@ struct basic_list {
   node_base node_;
   size_type size_{0U};
 
+  // force alignment
   std::uint8_t __fill_0__{0U};
   std::uint16_t __fill_1__{0U};
   std::uint32_t __fill_2__{0U};
